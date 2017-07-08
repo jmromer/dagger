@@ -1,0 +1,39 @@
+* dependency resolver
+
+  A program to resolve dependencies.
+
+** Valid Input
+
+   An array of strings, each with the format ~PACKAGE: [DEPENDENCY]~.
+
+   #+BEGIN_SRC ruby
+   [
+      "KittenService: ",
+      "Leetmeme: Cyberportal",
+      "Cyberportal: Ice",
+      "CamelCaser: KittenService",
+      "Fraudstream: Leetmeme",
+      "Ice: "
+   ]
+   #+END_SRC
+
+*** Output
+
+   #+BEGIN_SRC ruby
+   "KittenService, Ice, Cyberportal, Leetmeme, CamelCaser, Fraudstream"
+   #+END_SRC
+
+** Invalid Input
+
+   Dependency graphs containing cycles will raise an exception.
+
+   #+BEGIN_SRC ruby
+   [
+      "KittenService: ",
+      "Leetmeme: Cyberportal",
+      "Cyberportal: Ice",
+      "CamelCaser: KittenService",
+      "Fraudstream: ",
+      "Ice: Leetmeme"
+    ]
+   #+END_SRC
