@@ -9,9 +9,9 @@ RSpec.describe DependencyResolver do
   describe "#resolve" do
     context "given a list with a single dependency" do
       it "returns a comma-separated string of sorted dependencies" do
-        list = ["KittenService: CamelCaser", "CamelCaser: "]
+        dependencies = ["KittenService: CamelCaser", "CamelCaser: "]
 
-        sorted_list = described_class.new.resolve(list)
+        sorted_list = described_class.new.resolve(dependencies)
 
         expect(sorted_list).to eq "CamelCaser, KittenService"
       end
@@ -19,14 +19,14 @@ RSpec.describe DependencyResolver do
 
     context "given a list with multiple dependencies" do
       it "returns a comma-separated string of sorted dependencies" do
-        list = ["KittenService: ",
-                "Leetmeme: Cyberportal",
-                "Cyberportal: Ice",
-                "CamelCaser: KittenService",
-                "Fraudstream: Leetmeme",
-                "Ice: "]
+        dependencies = ["KittenService: ",
+                        "Leetmeme: Cyberportal",
+                        "Cyberportal: Ice",
+                        "CamelCaser: KittenService",
+                        "Fraudstream: Leetmeme",
+                        "Ice: "]
 
-        sorted_list = described_class.new.resolve(list)
+        sorted_list = described_class.new.resolve(dependencies)
 
         expect(sorted_list).to eq %w(KittenService
                                      Ice
