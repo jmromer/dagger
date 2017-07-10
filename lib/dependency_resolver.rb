@@ -1,26 +1,7 @@
 # frozen_string_literal: true
 
 require "package"
-
-class PackageList
-  attr_reader :package_list, :manifest
-
-  def initialize
-    @package_list = Set.new
-    @manifest = []
-  end
-
-  def add(package_manifest)
-    package_manifest.each do |package|
-      next if package_list.include?(package)
-
-      manifest << package
-      package_list << package
-    end
-  end
-
-  alias to_a manifest
-end
+require "package_list"
 
 class DependencyResolver
   def resolve(package_list)
@@ -47,7 +28,7 @@ end
 
 class CyclicDependencyError < StandardError
   def initialize(package, dependency_list)
-    message = "Package #{package} has cyclic dependencies: #{dependency_list}"
+    message = "Package '#{package}' has cyclic dependencies: #{dependency_list}"
     super(message)
   end
 end
