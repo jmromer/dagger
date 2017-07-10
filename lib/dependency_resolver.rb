@@ -2,24 +2,46 @@
 
 require "package"
 
-class DependencyResolver
-  def resolve(list)
-    packages = Package.build_collection_from_list(list)
+class PackageList
+  attr_reader :package_list, :manifest
 
-    sorted_list = packages.each_with_object([]) do |package, memo|
-      memo.push(*gather_dependencies(package))
-    end
-
-    sorted_list.uniq.join(", ")
+  def initialize
+    @package_list = Set.new
+    @manifest = []
   end
 
-  def gather_dependencies(package, list = [])
-    raise CyclicDependencyError.new(package, list) if list.include?(package)
+  def add(package_manifest)
+    package_manifest.each do |package|
+      next if package_list.include?(package)
 
-    list.unshift(package)
-    return list if package.dependency.nil?
+      manifest << package
+      package_list << package
+    end
+  end
 
-    gather_dependencies(package.dependency, list)
+  alias to_a manifest
+end
+
+class DependencyResolver
+  def resolve(package_list)
+    packages = Package.build_collection_from_list(package_list)
+
+    sorted_list = packages.each_with_object(PackageList.new) do |package, list|
+      list.add(gather_dependencies(package))
+    end
+
+    sorted_list.to_a.join(", ")
+  end
+
+  private
+
+  def gather_dependencies(package, deps = [])
+    raise CyclicDependencyError.new(package, deps) if deps.include?(package)
+
+    deps.unshift(package)
+    return deps if package.dependency.nil?
+
+    gather_dependencies(package.dependency, deps)
   end
 end
 
