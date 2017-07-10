@@ -1,10 +1,128 @@
 * dagger
 
-  A program to resolve dependencies.
+  A program to resolve dependencies, written in Ruby.
 
-** Valid Input
+** Usage
 
-   An array of strings, each with the format ~PACKAGE: [DEPENDENCY]~.
+   From the command line, pipe the contents of a package listing file to the
+   executable ~bin/dagger~ script as follows:
+
+   #+BEGIN_SRC shell
+   $ cat data/sample_input.txt | bin/dagger
+   # KittenService, Ice, Cyberportal, Leetmeme, CamelCaser, Fraudstream
+   #+END_SRC
+
+   Input files are expected to be in the following format:
+
+   #+BEGIN_SRC text
+   KittenService:
+   Leetmeme: Cyberportal
+   Cyberportal: Ice
+   CamelCaser: KittenService
+   Fraudstream: Leetmeme
+   Ice:
+   #+END_SRC
+
+** Architecture
+
+*** ~Dagger::DependencyResolver~
+
+    A coordinator class that performs dependency resolution via a
+    depth-first search through the dependency graph.
+
+    #+BEGIN_SRC ruby
+    # lib/dagger/dependency_resolver.rb L17-L24 (cc9ca72f)
+
+    def gather_dependencies(package, deps = [])
+      raise Dagger::CyclicDependencyError.new(package, deps) if deps.include?(package)
+
+      deps.unshift(package)
+      return deps if package.dependency.nil?
+
+      gather_dependencies(package.dependency, deps)
+    end
+    #+END_SRC
+    [[https://github.com/jkrmr/dagger/blob/cc9ca72f/lib/dagger/dependency_resolver.rb#L17-L24][lib/dagger/dependency_resolver.rb#L17-L24 (cc9ca72f)]]
+
+*** ~Dagger::Package~
+
+    A model class containing data for a given package and a reference to its
+    dependency, if it exists.
+
+    A type method, ~.build_collection_from_list~, provides a factory method
+    accepting a list of ~String~ instances and returning a list of ~Package~
+    instances.
+
+    #+BEGIN_SRC ruby
+    # lib/dagger/package.rb L13-L22 (cc9ca72f)
+
+    def self.build_collection_from_list(strings)
+      list_hash = strings.each_with_object({}) do |entry, memo|
+        name, dep_name = entry.scan(PACKAGE_ENTRY_FORMAT).flatten
+        memo[name] = new(name, dep_name)
+      end
+
+      list_hash.values.each do |package|
+        package.dependency = list_hash[package.dependency_name]
+      end
+    end
+    #+END_SRC
+    [[https://github.com/jkrmr/dagger/blob/cc9ca72f/lib/dagger/package.rb#L13-L22][lib/dagger/package.rb#L13-L22 (cc9ca72f)]]
+
+*** ~Dagger::PackageList~
+
+    Provides an ordered set implementation used to build the package manifest
+    (i.e., the list of packages to be installed, topologically sorted).
+
+    #+BEGIN_SRC ruby
+    # lib/dagger/package_list.rb L12-L21 (cc9ca72f)
+
+    def add(packages)
+      Array(packages).each do |package|
+        next if package_set.include?(package)
+
+        package_set << package
+        package_list << package
+      end
+
+      self
+    end
+    #+END_SRC
+    [[https://github.com/jkrmr/dagger/blob/cc9ca72f/lib/dagger/package_list.rb#L12-L21][lib/dagger/package_list.rb#L12-L21 (cc9ca72f)]]
+
+** Test Suite
+
+   The test suite is written in RSpec. An "RSpec-y" (i.e., DSL-heavy) style is
+   intentionally avoided in favor of a more traditional [[http://xunitpatterns.com/Four%20Phase%20Test.html][xUnit four-phase test]]
+   style.
+
+   #+BEGIN_SRC ruby
+   # spec/dagger/package_list_spec.rb L29-L45 (bc062558)
+
+   it "adds entries idempotently" do
+     list = described_class.new
+
+     list.add(1)
+     list.add(1)
+
+     expect(list.to_a).to eq [1]
+   end
+
+   it "maintains insertion order" do
+     list = described_class.new
+
+     list.add([5, 1, 2, 3])
+     list.add([2, 3, 4])
+
+     expect(list.to_a).to eq [5, 1, 2, 3, 4]
+   end
+   #+END_SRC
+   [[https://github.com/jkrmr/dagger/blob/bc062558/spec/dagger/package_list_spec.rb#L29-L45][spec/dagger/package_list_spec.rb#L29-L45 (bc062558)]]
+
+** ~Dagger::DependencyResolver#resolve~
+
+   The coordinator class's ~#resolve~ method accepts an array of strings, each
+   with the format ~PACKAGE: [DEPENDENCY]~.
 
    #+BEGIN_SRC ruby
    [
@@ -25,7 +143,7 @@
 
 ** Invalid Input
 
-   Dependency graphs containing cycles will raise an exception.
+   Dependency graphs containing cycles will raise a ~CyclicDependencyError~.
 
    #+BEGIN_SRC ruby
    [
@@ -36,4 +154,9 @@
       "Fraudstream: ",
       "Ice: Leetmeme"
     ]
+   #+END_SRC
+
+   #+BEGIN_SRC shell
+   Dagger::CyclicDependencyError:
+     Package 'Leetmeme' has cyclic dependencies: [Ice <Leetmeme>, Cyberportal <Ice>, Leetmeme <Cyberportal>]
    #+END_SRC
