@@ -14,9 +14,18 @@ class DependencyResolver
   end
 
   def gather_dependencies(package, list = [])
+    raise CyclicDependencyError.new(package, list) if list.include?(package)
+
     list.unshift(package)
     return list if package.dependency.nil?
 
     gather_dependencies(package.dependency, list)
+  end
+end
+
+class CyclicDependencyError < StandardError
+  def initialize(package, dependency_list)
+    message = "Package #{package} has cyclic dependencies: #{dependency_list}"
+    super(message)
   end
 end

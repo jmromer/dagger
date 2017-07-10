@@ -36,5 +36,20 @@ RSpec.describe DependencyResolver do
                                      Fraudstream).join(", ")
       end
     end
+
+    context "given cyclic dependencies" do
+      it "raises an exception" do
+        dependencies = ["KittenService: ",
+                        "Leetmeme: Cyberportal",
+                        "Cyberportal: Ice",
+                        "CamelCaser: KittenService",
+                        "Fraudstream: ",
+                        "Ice: Leetmeme"]
+
+        sort_list = -> { described_class.new.resolve(dependencies) }
+
+        expect { sort_list.call }.to raise_exception(CyclicDependencyError)
+      end
+    end
   end
 end
