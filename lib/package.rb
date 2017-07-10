@@ -6,21 +6,29 @@ class Package
 
   PACKAGE_ENTRY_FORMAT = /([[:word:]]+): ([[:word:]]+)?/i
 
-  def self.parse_list(strings:)
-    strings.each_with_object([]) do |entry, memo|
+  def self.build_collection_from_list(strings)
+    list_hash = strings.each_with_object({}) do |entry, memo|
       name, dep_name = entry.scan(PACKAGE_ENTRY_FORMAT).flatten
-      memo << new(name, dep_name)
+      memo[name] = new(name, dep_name)
+    end
+
+    list_hash.values.each do |package|
+      package.dependency = list_hash[package.dependency_name]
     end
   end
 
-  def initialize(name, dependency_name)
+  def initialize(name, dependency_name = nil)
     @name = name
     @dependency_name = dependency_name
   end
 
+  def ==(other)
+    name == other.name
+  end
+
   def inspect
     return name if dependency.nil?
-    "#{name} <#{dependency_name}>"
+    "#{name} <#{dependency.name}>"
   end
 
   def to_s
