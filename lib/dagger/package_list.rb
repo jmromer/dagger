@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Dagger
   class PackageList
     def initialize
-      @package_set = Set.new
+      @package_set = ::Set.new
       @package_list = []
     end
 

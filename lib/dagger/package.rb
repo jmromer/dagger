@@ -5,7 +5,7 @@ module Dagger
     attr_reader :name, :dependency_name
     attr_accessor :dependency
 
-    PACKAGE_ENTRY_FORMAT = /([[:word:]]+): ([[:word:]]+)?/i
+    PACKAGE_ENTRY_FORMAT = /([[:word:]]+):[[:space:]]*([[:word:]]+)?/i
 
     # Factory method: Accepts a list of strings, returns a list of Package
     # instances with dependency field set to any Package found in the same lsit
