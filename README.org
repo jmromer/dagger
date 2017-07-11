@@ -1,5 +1,7 @@
 * dagger
-
+  
+  [[https://circleci.com/gh/jkrmr/dagger][https://circleci.com/gh/jkrmr/dagger.svg?style=svg]]
+  
   A program to resolve dependencies, written in Ruby.
 
 ** Usage
