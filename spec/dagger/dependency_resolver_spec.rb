@@ -30,11 +30,11 @@ module Dagger
           sorted_list = described_class.new.resolve(dependencies)
 
           expect(sorted_list).to eq %w(KittenService
-                                     Ice
-                                     Cyberportal
-                                     Leetmeme
-                                     CamelCaser
-                                     Fraudstream).join(", ")
+                                       Ice
+                                       Cyberportal
+                                       Leetmeme
+                                       CamelCaser
+                                       Fraudstream).join(", ")
         end
       end
 
@@ -47,9 +47,10 @@ module Dagger
                           "Fraudstream: ",
                           "Ice: Leetmeme"]
 
-          sort_list = -> { described_class.new.resolve(dependencies) }
+          resolve = described_class.new.method(:resolve)
 
-          expect { sort_list.call }.to raise_exception(CyclicDependencyError)
+          expect { resolve.call(dependencies) }
+            .to raise_exception(CyclicDependencyError)
         end
       end
     end
